@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#include "status.h"
+#include "status_hash_table.h"
 
 int init_table(HashTable* hash_table, int num_slots) {
     int res = SUCCESS;
@@ -16,9 +16,11 @@ int init_table(HashTable* hash_table, int num_slots) {
     }
 
     hash_table->num_slots = num_slots;
+    hash_table->size = 0;
 
 out:
-    if(res == EMEM) printf("EMEM: Failed to allocate memory for HashTable.table!\n");
+    if(res == EMEM) printf("EMEM: Failed to allocate memory for "
+                           "HashTable.table!\n");
     return res;
 }
 
@@ -37,10 +39,14 @@ static int hash(const char* key, HashTable* hash_table) {
     return (int)(encode(key) % (uint64_t)hash_table->num_slots);
 }
 
+// NOTE: This function effectively allows a `HashTable` to have two distinct
+// entries with the same key. This is because to prevent duplicate keys, we
+// would have to spend time searching our `HashTable` for an entry whose key
+// equals the argument `key` (e.g., by invoking `search_for_entry`). Thus, our
+// implementation of inserting an entry into a hash table prioritizes
+// performance over safety.
 int insert_entry(HashTable* hash_table, const char* key, void* value) {
     int res = SUCCESS;
-
-    int table_index = hash(key, hash_table);
 
     TableEntry* new_entry = calloc(1, sizeof(TableEntry));
     if(new_entry== 0) {
@@ -49,6 +55,8 @@ int insert_entry(HashTable* hash_table, const char* key, void* value) {
     }
     new_entry->key = strdup(key);
     new_entry->value = value;
+
+    int table_index = hash(key, hash_table);
 
     TableEntry* cur_entry = hash_table->table[table_index];
     if(cur_entry != 0) {
@@ -98,35 +106,43 @@ int delete_entry(HashTable* hash_table, TableEntry* entry) {
         if(entry->next != 0) entry->next->prev = entry->prev;
     } 
 
-    free(entry->key);
+    free((void*)entry->key);
+    free(entry->value);
     free(entry);
     --hash_table->size;
 
 out:
-    if(res == EINVARG) printf("EINVARG: Both the `hash_table` and `entry` arguments must not be null!\n");
+    if(res == EINVARG) printf("EINVARG: Both the `hash_table` and `entry` "
+                              "arguments must not be null!\n");
     return res;
 }
 
-int delete_table(HashTable* hash_table) {
+int delete_table(HashTable** hash_table_ref) {
     int res = SUCCESS;
 
-    if(hash_table == 0) {
+    if(hash_table_ref == 0 || *hash_table_ref == 0) {
         res = EINVARG;
         goto out;
     }
+
+    HashTable* hash_table = *hash_table_ref;
 
     for(int i = 0; i < hash_table->num_slots; ++i) {
         TableEntry* cur_entry = hash_table->table[i];
         while(cur_entry != 0) {
             TableEntry* tmp = cur_entry->next;
-            delete(hash_table, cur_entry);
+            delete_entry(hash_table, cur_entry);
             cur_entry = tmp;
         }
     }
 
     free(hash_table->table);
+    hash_table->table = 0;
+    free(hash_table);
+    *hash_table_ref = 0;
 
 out:
-    if(res == EINVARG) printf("EINVARG: hash_table argument must nut be null!\n");
+    if(res == EINVARG) printf("EINVARG: hash_table_ref and (*hash_table_ref) "
+                              "must not be null!\n");
     return res;
 }
