@@ -107,7 +107,6 @@ int delete_entry(HashTable* hash_table, TableEntry* entry) {
     } 
 
     free((void*)entry->key);
-    free(entry->value);
     free(entry);
     --hash_table->size;
 
