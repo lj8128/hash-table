@@ -1,7 +1,8 @@
 #include "hash_table.h"
 #include "test_setup_and_cleanup.h"
 #include "test_execution.h"
-#include "status_test_framework.h"
+#include "status_hash_table.h"
+#include "status_tests_and_routines.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -88,21 +89,3 @@ int main() {
     return res;
 }
 
-// int run_specific_test(TestCatalog* catalog, const char* test_name);
-// int run_all_tests(TestCatalog* catalog);
-
-// int init_test_catalog(TestCatalog* catalog);
-// int register_test(TestCatalog* catalog, const char* test_name, TestResult (*test_function)());
-// int register_before_each_routine(TestCatalog* catalog, RoutineResult (*before_each_routine)());
-// int register_after_each_routine(TestCatalog* catalog, RoutineResult (*after_each_routine)());
-// int delete_test_catalog(TestCatalog** catalog_ref);
-
-// typedef enum {
-//     TEST_PASSED = 0,
-//     TEST_FAILED 
-// } TestResult;
-
-// typedef enum {
-//     ROUTINE_SUCCEEDED = 0,
-//     ROUTINE_FAILED 
-// } RoutineResult;
